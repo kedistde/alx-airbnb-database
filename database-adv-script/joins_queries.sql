@@ -21,7 +21,11 @@ left join
   rev.comment
 FROM properties AS prop
 LEFT JOIN reviews AS rev
-  ON prop.id = rev.property_id;
+  ON prop.id = rev.property_id
+ORDER BY
+  prop.title ASC,
+  rev.id ASC;
+
 
 full outer join 
   SELECT
