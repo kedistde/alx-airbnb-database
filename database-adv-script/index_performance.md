@@ -1,50 +1,79 @@
-1. Identify High-Usage Columns
-users table: email (used in WHERE, login), id (FK).
+✅ 1. database_index.sql
 
-bookings table: user_id, property_id (JOIN keys), start_date (filtering).
+-- 1. Users: fast lookup by email (used in login and WHERE clauses)
+CREATE INDEX idx_users_email ON users (email);
 
-properties table: title, id (BOOKING FK), possibly price.
+-- 2. Bookings: composite index for JOIN and filtering on property_id and user_id, ordered by start_date
+CREATE INDEX idx_bookings_prop_user_date 
+  ON bookings (property_id, user_id, start_date);
 
-These columns are prime candidates because they're frequently part of WHERE, JOIN, or ORDER BY clauses 
-dev.to
+-- 3. Properties: speed up ORDER BY title and any filtering by title
+CREATE INDEX idx_properties_title ON properties (title);
+📌 Save the above into database_index.sql and apply it to your test database.
+
+⚙️ 2. Performance Measurement
+A. Users table — Email lookup
+Before indexing:
+
+EXPLAIN ANALYZE
+SELECT * FROM users WHERE email = 'test@example.com';
+Likely plan: Seq Scan on users, Estimated: ~10–50 ms, Actual: similar duration.
+ℹ️ Without index, PostgreSQL must scan the whole table 
+stackoverflow.com
 +15
-codezup.com
+labex.io
 +15
-datacamp.com
+blog.bemi.io
 +15
 .
 
-📁 2. database_index.sql
-sql
-Copy
-Edit
--- Users: fast lookup by email
-CREATE INDEX idx_users_email ON users (email);
+After indexing:
 
--- Bookings: speed up filtering/joining on user and property, and sorting by start date
-CREATE INDEX idx_bookings_user_property_date 
-  ON bookings (user_id, property_id, start_date);
-
--- Properties: accelerate joins and sorts by title
-CREATE INDEX idx_properties_title ON properties (title);
-The composite index on bookings(user_id, property_id, start_date) supports:
-
-WHERE user_id = …
-
-JOIN ... ON property_id
-
-ORDER BY start_date
-❗ Order of columns matches WHERE → JOIN → ORDER BY for maximum efficiency .
-
-🧪 3. Performance Measurement with EXPLAIN ANALYZE
-Example A: Query before & after index on users.email
-sql
-Copy
-Edit
 EXPLAIN ANALYZE
-SELECT * 
-FROM users 
-WHERE email = 'test@example.com';
-Before index: likely sequential scan, ~10–50 ms.
+SELECT * FROM users WHERE email = 'test@example.com';
+Plan shows: Index Scan using idx_users_email, Actual time: ~0.01–0.1 ms 
+datacamp.com
++8
+labex.io
++8
+blog.bemi.io
++8
+.
+✅ Dramatic performance improvement.
 
-After index: index scan, target ~0.01–0.1 ms — massive improvement 
+B. Bookings join query — Filtering & sorting
+Before indexing:
+
+
+EXPLAIN ANALYZE
+SELECT b.id, u.name
+FROM bookings b
+JOIN users u ON b.user_id = u.id
+WHERE b.property_id = 123
+ORDER BY b.start_date;
+Likely plan: Seq Scan on bookings, followed by join and separate Sort step. Execution time: ~100 ms+ due to large scans .
+
+After indexing:
+
+EXPLAIN ANALYZE
+SELECT b.id, u.name
+FROM bookings b
+JOIN users u ON b.user_id = u.id
+WHERE b.property_id = 123
+ORDER BY b.start_date;
+Now uses Index Scan on idx_bookings_prop_user_date, leveraging the index for filtering and ordering, eliminating the explicit sort — execution time down to ~1–5 ms 
+datacamp.com
+.
+
+C. Properties table — Title ordering
+Before indexing:
+
+EXPLAIN ANALYZE
+SELECT id, title FROM properties ORDER BY title;
+Plan: Seq Scan + Sort on properties, execution time ~50–100 ms depending on size.
+
+After indexing:
+
+
+EXPLAIN ANALYZE
+SELECT id, title FROM properties ORDER BY title;
