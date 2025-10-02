@@ -1,4 +1,18 @@
-✅ 1. database_index.sql
+# Index Performance Analysis
+
+## Performance Measurement Before and After Indexing
+
+### Test Query 1: Find bookings by date range
+```sql
+-- Before indexing
+EXPLAIN ANALYZE
+SELECT * FROM Booking 
+WHERE start_date BETWEEN '2024-01-01' AND '2024-12-31';
+
+-- After indexing
+EXPLAIN ANALYZE
+SELECT * FROM Booking 
+WHERE start_date BETWEEN '2024-01-01' AND '2024-12-31';✅ 1. database_index.sql
 
 -- 1. Users: fast lookup by email (used in login and WHERE clauses)
 CREATE INDEX idx_users_email ON users (email);
