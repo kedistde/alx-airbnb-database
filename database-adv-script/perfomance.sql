@@ -1,4 +1,161 @@
--- performance.sql
+-- Task 4: Optimize Complex Queries
+
+-- Initial Query (Before Optimization)
+SELECT 
+    b.booking_id,
+    b.start_date,
+    b.end_date,
+    b.total_amount,
+    b.status,
+    u.user_id,
+    u.username,
+    u.email,
+    u.phone_number,
+    p.property_id,
+    p.title,
+    p.property_type,
+    p.price_per_night,
+    p.bedrooms,
+    p.bathrooms,
+    pay.payment_id,
+    pay.amount,
+    pay.payment_method,
+    pay.payment_status,
+    pay.payment_date,
+    h.username as host_username,
+    h.email as host_email
+FROM 
+    Booking b
+INNER JOIN 
+    User u ON b.user_id = u.user_id
+INNER JOIN 
+    Property p ON b.property_id = p.property_id
+INNER JOIN 
+    User h ON p.host_id = h.user_id
+LEFT JOIN 
+    Payment pay ON b.booking_id = pay.booking_id
+WHERE 
+    b.start_date BETWEEN '2024-01-01' AND '2024-12-31'
+    AND b.status = 'confirmed'
+    AND p.property_type = 'apartment'
+    AND p.price_per_night BETWEEN 50 AND 200
+ORDER BY 
+    b.start_date DESC, b.total_amount DESC;
+
+-- Optimized Query (After Optimization)
+SELECT 
+    b.booking_id,
+    b.start_date,
+    b.end_date,
+    b.total_amount,
+    b.status,
+    u.user_id,
+    u.username,
+    u.email,
+    p.property_id,
+    p.title,
+    p.property_type,
+    p.price_per_night,
+    pay.payment_id,
+    pay.amount,
+    pay.payment_method,
+    pay.payment_status
+FROM 
+    Booking b
+INNER JOIN 
+    User u ON b.user_id = u.user_id
+INNER JOIN 
+    Property p ON b.property_id = p.property_id
+LEFT JOIN 
+    Payment pay ON b.booking_id = pay.booking_id
+WHERE 
+    b.start_date BETWEEN '2024-01-01' AND '2024-12-31'
+    AND b.status = 'confirmed'
+    AND p.property_type = 'apartment'
+    AND p.price_per_night BETWEEN 50 AND 200
+    AND b.total_amount > 0
+    AND u.active = true
+    AND p.is_available = true
+ORDER BY 
+    b.start_date DESC;
+
+-- Performance Analysis Queries
+-- Analyze initial query
+EXPLAIN ANALYZE
+SELECT 
+    b.booking_id,
+    b.start_date,
+    b.end_date,
+    b.total_amount,
+    b.status,
+    u.user_id,
+    u.username,
+    u.email,
+    u.phone_number,
+    p.property_id,
+    p.title,
+    p.property_type,
+    p.price_per_night,
+    p.bedrooms,
+    p.bathrooms,
+    pay.payment_id,
+    pay.amount,
+    pay.payment_method,
+    pay.payment_status,
+    pay.payment_date,
+    h.username as host_username,
+    h.email as host_email
+FROM 
+    Booking b
+INNER JOIN 
+    User u ON b.user_id = u.user_id
+INNER JOIN 
+    Property p ON b.property_id = p.property_id
+INNER JOIN 
+    User h ON p.host_id = h.user_id
+LEFT JOIN 
+    Payment pay ON b.booking_id = pay.booking_id
+WHERE 
+    b.start_date BETWEEN '2024-01-01' AND '2024-12-31'
+    AND b.status = 'confirmed'
+    AND p.property_type = 'apartment'
+    AND p.price_per_night BETWEEN 50 AND 200;
+
+-- Analyze optimized query
+EXPLAIN ANALYZE
+SELECT 
+    b.booking_id,
+    b.start_date,
+    b.end_date,
+    b.total_amount,
+    b.status,
+    u.user_id,
+    u.username,
+    u.email,
+    p.property_id,
+    p.title,
+    p.property_type,
+    p.price_per_night,
+    pay.payment_id,
+    pay.amount,
+    pay.payment_method,
+    pay.payment_status
+FROM 
+    Booking b
+INNER JOIN 
+    User u ON b.user_id = u.user_id
+INNER JOIN 
+    Property p ON b.property_id = p.property_id
+LEFT JOIN 
+    Payment pay ON b.booking_id = pay.booking_id
+WHERE 
+    b.start_date BETWEEN '2024-01-01' AND '2024-12-31'
+    AND b.status = 'confirmed'
+    AND p.property_type = 'apartment'
+    AND p.price_per_night BETWEEN 50 AND 200
+    AND b.total_amount > 0
+    AND u.active = true
+    AND p.is_available = true;-- performance.sql
 
 SELECT
   b.id            AS booking_id,
