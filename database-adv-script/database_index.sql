@@ -14,7 +14,21 @@ CREATE INDEX idx_booking_start_date ON Booking(start_date);
 CREATE INDEX idx_booking_end_date ON Booking(end_date);
 CREATE INDEX idx_booking_status ON Booking(status);
 CREATE INDEX idx_booking_dates ON Booking(start_date, end_date);
+# Index Performance Analysis
 
+## Performance Measurement Before and After Indexing
+
+### Test Query 1: Find bookings by date range
+```sql
+-- Before indexing
+EXPLAIN ANALYZE
+SELECT * FROM Booking 
+WHERE start_date BETWEEN '2024-01-01' AND '2024-12-31';
+
+-- After indexing
+EXPLAIN ANALYZE
+SELECT * FROM Booking 
+WHERE start_date BETWEEN '2024-01-01' AND '2024-12-31';
 -- 3. Indexes for Property table
 CREATE INDEX idx_property_host_id ON Property(host_id);
 CREATE INDEX idx_property_property_type ON Property(property_type);
